@@ -102,7 +102,7 @@ def webhook():
 	}
 
 	# LINE APIに返信を送信
-	request.post('https://api.line.me/v2/bot/message/reply', headers=line_headers, json=line_body)
+	requests.post('https://api.line.me/v2/bot/message/reply', headers=line_headers, json=line_body)
 
 	return jsonify({'content':'post ok'}), 200
 
