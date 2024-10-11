@@ -88,8 +88,14 @@ def webhook():
 
 	# OpenAI APIにリクエストを送信
 	response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, json=body)
-	response_json = response.json()
-	text = response_json['choices'][0]['message']['content'].strip()
+	
+	# OpenAI APIエラーハンドリング
+	if response.ok:
+		response_json = response.json()
+		text = response_json['choices'][0]['message']['content'].strip()
+	else:
+		text = "Error: Could not retrieve response from OpenAI API"
+		app.logger.error(f"OpenAI API error: {response.status_code} {response.text}")
 
 	# Line APIへの返信設定
 	line_headers = {
