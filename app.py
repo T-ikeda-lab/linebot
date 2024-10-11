@@ -23,7 +23,7 @@ load_dotenv()
 ## 環境変数を変数に割り当て
 CHANNEL_ACCESS_TOKEN = os.environ["CHANNEL_ACCESS_TOKEN"]
 CHANNEL_SECRET = os.environ["CHANNEL_SECRET"]
-OPENAI_APIKEY = os.getenv['OPENAI_APIKEY']
+OPENAI_APIKEY = os.getenv('OPENAI_APIKEY')
 
 ## Flask アプリのインスタンス化
 app = Flask(__name__)
