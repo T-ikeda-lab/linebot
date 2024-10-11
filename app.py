@@ -24,7 +24,7 @@ load_dotenv()
 ## 環境変数を変数に割り当て
 CHANNEL_ACCESS_TOKEN = os.environ["CHANNEL_ACCESS_TOKEN"]
 CHANNEL_SECRET = os.environ["CHANNEL_SECRET"]
-openai.api_key = os.getenv("OPNEAI_API_KEY")
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 ## Flask アプリのインスタンス化
 app = Flask(__name__)
@@ -77,7 +77,7 @@ def webhook():
 	# OpenAI APIへのリクエストの設定
 	headers = {
 		'Content-Type':'application/json',
-		'Authorization': f'Bearer{"OPENAI_API_KEY"}'
+		'Authorization': f'Bearer {openai.api_key}'
 	}
 	body = {
 		'model':'gpt-3.5-turbo',
@@ -89,12 +89,12 @@ def webhook():
 	# OpenAI APIにリクエストを送信
 	response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, json=body)
 	response_json = response.json()
-	text = response_json['choice'][0]['message']['content'].strip()
+	text = response_json['choices'][0]['message']['content'].strip()
 
 	# Line APIへの返信設定
 	line_headers = {
 		'Content-Type':'application/json',
-		'Authorization': f'Bearer{CHANNEL_ACCESS_TOKEN}'
+		'Authorization': f'Bearer {CHANNEL_ACCESS_TOKEN}'
 	}
 	line_body = {
 		'replyToken': reply_token,
