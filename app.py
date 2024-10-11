@@ -12,6 +12,7 @@ from linebot.v3.webhooks import (
 )
 import os
 import json
+import openai
 
 # HTTPリクエストを送信するライブラリ
 import requests
@@ -23,7 +24,8 @@ load_dotenv()
 ## 環境変数を変数に割り当て
 CHANNEL_ACCESS_TOKEN = os.environ["CHANNEL_ACCESS_TOKEN"]
 CHANNEL_SECRET = os.environ["CHANNEL_SECRET"]
-OPENAI_APIKEY = os.getenv('OPENAI_APIKEY')
+OPENAI_APIKEY = os.environ["OPENAI_APIKEY"]
+openai.api_key = os.getenv("OPNENAI_KEY")
 
 ## Flask アプリのインスタンス化
 app = Flask(__name__)
