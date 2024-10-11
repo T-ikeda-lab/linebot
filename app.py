@@ -32,6 +32,17 @@ app = Flask(__name__)
 ## LINE のアクセストークン読み込み
 configuration = Configuration(access_token=CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(CHANNEL_SECRET)
+api_client = ApiClient(configuration)  # MessagingApiのインスタンス化
+line_bot_api = MessagingApi(api_client)
+
+## 友達追加時のメッセージ送信
+@handler.add(FollowEvent)
+def handle_follow(event):
+	## 返信
+	line_bot_api.reply_message(ReplyMessageRequest(
+		replyToken=event.reply_token,
+		messages=[TextMessage(text='Thank You!')]
+	))
 
 ## コールバックのおまじない
 @app.route("/callback", methods=['POST'])
@@ -50,29 +61,12 @@ def callback():
 		app.logger.info("Invalid signature. Please check your channel access token/channel secret.")
 		abort(400)
 
-	return 'OK'
+	return 'OK'	
 
-## 友達追加時のメッセージ送信
-@handler.add(FollowEvent)
-def handle_follow(event):
-	## APIインスタンス化
-	with ApiClient(configuration) as api_client:
-		line_bot_api = MessagingApi(api_client)
-
-	## 返信
-	line_bot_api.reply_message(ReplyMessageRequest(
-		replyToken=event.reply_token,
-		messages=[TextMessage(text='Thank You!')]
-	))
-	
 ## ChatGPTボット
-@app.route('/webhook', methods=['POST'])
-def webhook():
-	data = request.json
-	event = data['events'][0]
-
-	reply_token = event['replyToken']
-	user_message = event['message'].get('text', '???')
+@handler.add(MessageEvent, message=TextMessageContent)
+def handle_message(event):
+    user_message = event.message.text
 
 	# OpenAI APIへのリクエストの設定
 	headers = {
@@ -94,23 +88,16 @@ def webhook():
 		response_json = response.json()
 		text = response_json['choices'][0]['message']['content'].strip()
 	else:
-		text = "Error: Could not retrieve response from OpenAI API"
+		text = "申し訳ありません。エラーが発生しました。"
 		app.logger.error(f"OpenAI API error: {response.status_code} {response.text}")
 
-	# Line APIへの返信設定
-	line_headers = {
-		'Content-Type':'application/json',
-		'Authorization': f'Bearer {CHANNEL_ACCESS_TOKEN}'
-	}
-	line_body = {
-		'replyToken': reply_token,
-		'messages': [{'type':'text', 'text': text}]
-	}
-
-	# LINE APIに返信を送信
-	requests.post('https://api.line.me/v2/bot/message/reply', headers=line_headers, json=line_body)
-
-	return jsonify({'content':'post ok'}), 200
+	 # LINEに返信を送信
+    line_bot_api.reply_message(
+        ReplyMessageRequest(
+            replyToken=event.reply_token,
+            messages=[TextMessage(text=text)]
+        )
+    )
 
 ## オウム返しメッセージ
 #@handler.add(MessageEvent, message=TextMessageContent)
