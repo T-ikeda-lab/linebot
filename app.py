@@ -13,8 +13,12 @@ from linebot.v3.webhooks import (
 import os
 
 ## .env ファイル読み込み
+# from dotenv import load_dotenv
+# load_dotenv()
+
+## test.env ファイル読み込み
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv('test.env', override=True)
 
 ## 環境変数を変数に割り当て
 CHANNEL_ACCESS_TOKEN = os.environ["CHANNEL_ACCESS_TOKEN"]
