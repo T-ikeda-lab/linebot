@@ -77,7 +77,7 @@ def webhook():
 	# OpenAI APIへのリクエストの設定
 	headers = {
 		'Content-Type':'application/json',
-		'Authorization': f'Bearer{OPENAI_APIKEY}'
+		'Authorization': f'Bearer{"OPENAI_API_KEY"}'
 	}
 	body = {
 		'model':'gpt-3.5-turbo',
