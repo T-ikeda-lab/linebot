@@ -67,15 +67,6 @@ def call_open_chat_api(user_message):
 
 ## コールバックのおまじない
 @app.route("/callback", methods=['POST'])
-@handler.add(MessageEvent, message=TextMessageContent)
-def handle_message(event):
-	## APIインスタンス化
-	with ApiClient(configuration) as api_client:
-		line_bot_api = MessagingApi(api_client)
-
-	# 受信メッセージの中身を取得
-	user_message = event.message.text
-
 def callback():
 	# get X-Line-Signature header value
 	signature = request.headers['X-Line-Signature']
@@ -86,42 +77,33 @@ def callback():
 
 	# handle webhook body
 	try:
-		events = handler.handle(body, signature)
+		handler.handle(body, signature)
 	except InvalidSignatureError:
 		app.logger.info("Invalid signature. Please check your channel access token/channel secret.")
 		abort(400)
 
-	for event in events:
-		if not isinstance(event, MessageEvent):
-			continue
-		if not isinstance(event.message, TextMessage):
-			continue
+	return 'OK'	
 
-		result = call_open_chat_api(event.message.text)
-
+## Chatボット
+@handler.add(MessageEvent, message=TextMessageContent)
+def handle_message(event):
 	## APIインスタンス化
 	with ApiClient(configuration) as api_client:
 		line_bot_api = MessagingApi(api_client)
 
-		# LINEに返信を送信
-		line_bot_api.reply_message(
-    		ReplyMessageRequest(
-        		replyToken=event.reply_token,
-        		messages=[TextMessage(text=result)]
-        	)
-		)
-
-	return 'OK'	
-
-## Chatボット
-#@handler.add(MessageEvent, message=TextMessageContent)
-#def handle_message(event):
-	## APIインスタンス化
-#	with ApiClient(configuration) as api_client:
-#		line_bot_api = MessagingApi(api_client)
-
 	# 受信メッセージの中身を取得
-#	user_message = event.message.text
+	user_message = event.message.text
+
+	# OpenAIの返信結果
+	result = call_open_chat_api(user_message)
+
+	# LINEに返信を送信
+	line_bot_api.reply_message_with_http_info(
+   	ReplyMessageRequest(
+        	replyToken=event.reply_token,
+        	messages=[TextMessage(text=result)]
+       )
+    )
 
 	# OpenAI APIへのリクエストの設定
 #	headers = {
@@ -146,14 +128,6 @@ def callback():
 #		text = "申し訳ありません。エラーが発生しました。"
 #		app.logger.error(f"OpenAI API error: {response.status_code} {response.text}")
 
-	# LINEに返信を送信
-#
-#	line_bot_api.reply_message_with_http_info(
-#    	ReplyMessageRequest(
-#        	replyToken=event.reply_token,
-#        	messages=[TextMessage(text=result)]
-#        )
-#    )
 
 ## オウム返しメッセージ
 #@handler.add(MessageEvent, message=TextMessageContent)
