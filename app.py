@@ -57,12 +57,13 @@ def call_open_chat_api(user_message):
 	try:	
 		response = openai.ChatCompletion.create(
 			model='gpt-3.5-turbo',
-			message=[
+			messages=[
 				{'role': 'system', 'content': 'You are helpful assustant.'},
 				{'role': 'user', 'content': user_message}
 			]
 		)
-
+		# APIレスポンスをログに出力する
+		logging.info(f"OpneAI API Response: {response}")
 		return response.choices[0].message['content']
 	except Exception as e:
 		logging.exception("An error occured calling OpenAI API.")
