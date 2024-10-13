@@ -73,14 +73,7 @@ def handle_message(event):
 	with ApiClient(configuration) as api_client:
 		line_bot_api = MessagingApi(api_client)
 
-	# LINEに返信を送信
-	line_bot_api.reply_message_with_http_info(
-    	ReplyMessageRequest(
-        	replyToken=event.reply_token,
-        	messages=[TextMessage(text=text)]
-        )
-    )
-
+	# 受信メッセージの中身を取得
 	user_message = event.message.text
 
 	# OpenAI APIへのリクエストの設定
@@ -105,6 +98,14 @@ def handle_message(event):
 	else:
 		text = "申し訳ありません。エラーが発生しました。"
 		app.logger.error(f"OpenAI API error: {response.status_code} {response.text}")
+
+	# LINEに返信を送信
+	line_bot_api.reply_message_with_http_info(
+    	ReplyMessageRequest(
+        	replyToken=event.reply_token,
+        	messages=[TextMessage(text=text)]
+        )
+    )
 
 ## オウム返しメッセージ
 #@handler.add(MessageEvent, message=TextMessageContent)
