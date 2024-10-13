@@ -54,16 +54,19 @@ def handle_follow(event):
 
 # OpenAIの設定
 def call_open_chat_api(user_message):
-		
-	response = openai.ChatCompletion.create(
-		model='gpt-3.5-turbo',
-		message=[
-			{'role': 'system', 'content': 'You are helpful assustant.'},
-			{'role': 'user', 'content': user_message}
-		]
-	)
+	try:	
+		response = openai.ChatCompletion.create(
+			model='gpt-3.5-turbo',
+			message=[
+				{'role': 'system', 'content': 'You are helpful assustant.'},
+				{'role': 'user', 'content': user_message}
+			]
+		)
 
-	return response.choices[0].message['content']
+		return response.choices[0].message['content']
+	except Exception as e:
+		logging.exception("An error occured calling OpenAI API.")
+		return "OpenAI APIでエラーが発生しました。"
 
 ## コールバックのおまじない
 @app.route("/callback", methods=['POST'])
@@ -103,7 +106,7 @@ def handle_message(event):
 		result = call_open_chat_api(user_message)
 
 		# LINEに返信を送信
-		line_bot_api.reply_message_with_http_info(
+		line_bot_api.reply_message(
    		ReplyMessageRequest(
         		replyToken=event.reply_token,
         		messages=[TextMessage(text=result)]
@@ -112,7 +115,7 @@ def handle_message(event):
 	except Exception as e:
 		logging.exception("An error occured during message handling:")
 		# エラー発生時にユーザーに通知
-		line_bot_api.reply_message_with_http_info(
+		line_bot_api.reply_message(
 			ReplyMessageRequest(
 				replyToken=event.reply_token,
 				messages=[TextMessage(text="エラーが発生しました。")]
