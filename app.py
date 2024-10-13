@@ -42,6 +42,10 @@ handler = WebhookHandler(CHANNEL_SECRET)
 ## 友達追加時のメッセージ送信
 @handler.add(FollowEvent)
 def handle_follow(event):
+	## APIインスタンス化
+	with ApiClient(configuration) as api_client:
+		line_bot_api = MessagingApi(api_client)
+
 	## 返信
 	line_bot_api.reply_message(ReplyMessageRequest(
 		replyToken=event.reply_token,
@@ -70,40 +74,63 @@ def callback():
 ## ChatGPTボット
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
+	## APIインスタンス化
 	with ApiClient(configuration) as api_client:
 		line_bot_api = MessagingApi(api_client)
 
 	# 受信メッセージの中身を取得
 	user_message = event.message.text
 
-	# OpenAI APIへのリクエストの設定
-	headers = {
-			'Content-Type':'application/json',
-			'Authorization': f'Bearer {openai.api_key}'
-		}
-	body = {
-			'model':'gpt-3.5-turbo',
-			'messages':[
-			{'role':'user', 'content':user_message}
+	# OpenAI チャットボットの呼び出し
+	def call_open_chat_api(user_message):
+		
+		response = openai.ChatCompletion.create(
+			model='gpt-3.5-turbo',
+			message=[
+				{'role': 'system', 'content': 'You are helpful assustant.'},
+				{'role': 'user', 'content': user_message}
 			]
-		}
 
+		)
+
+		return response.choices[0].message['content']
+
+	for event in event:
+		if not isinstance(event, MessageEvent):
+			continue
+		if not isinstance(event.message, TextMessage):
+			continue
+
+		result = call_open_chat_api(event.message.text)
+
+	# OpenAI APIへのリクエストの設定
+#	headers = {
+#			'Content-Type':'application/json',
+#			'Authorization': f'Bearer {openai.api_key}'
+#		}
+#	body = {
+#			'model':'gpt-3.5-turbo',
+#			'messages':[
+#			{'role':'user', 'content':user_message}
+#			]
+#		}
+#
 	# OpenAI APIにリクエストを送信
-	response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, json=body)
-	
+#	response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, json=body)
+#	
 	# OpenAI APIエラーハンドリング
-	if response.ok:
-		response_json = response.json()
-		text = response_json['choices'][0]['message']['content'].strip()
-	else:
-		text = "申し訳ありません。エラーが発生しました。"
-		app.logger.error(f"OpenAI API error: {response.status_code} {response.text}")
+#	if response.ok:
+#		response_json = response.json()
+#		text = response_json['choices'][0]['message']['content'].strip()
+#	else:
+#		text = "申し訳ありません。エラーが発生しました。"
+#		app.logger.error(f"OpenAI API error: {response.status_code} {response.text}")
 
 	# LINEに返信を送信
 	line_bot_api.reply_message_with_http_info(
     	ReplyMessageRequest(
         	replyToken=event.reply_token,
-        	messages=[TextMessage(text=text)]
+        	messages=[TextMessage(text=result)]
         )
     )
 
