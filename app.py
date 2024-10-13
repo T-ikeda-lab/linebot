@@ -18,8 +18,8 @@ import openai
 import requests
 
 # エラーログの取得
-# import logging
-# logging.basicConfig(filename='error.log', level=logging.DEBUG)
+import logging
+logging.basicConfig(filename='error.log', level=logging.DEBUG)
 
 ## .env ファイル読み込み
 from dotenv import load_dotenv
@@ -81,6 +81,10 @@ def callback():
 	except InvalidSignatureError:
 		app.logger.info("Invalid signature. Please check your channel access token/channel secret.")
 		abort(400)
+	except Exception as e:
+		# 予期せぬエラーをログ出力
+		logging.exception("An error occurd during webhook handling:")
+		abort(500)
 
 	return 'OK'	
 
@@ -94,17 +98,26 @@ def handle_message(event):
 	# 受信メッセージの中身を取得
 	user_message = event.message.text
 
-	# OpenAIの返信結果
-	result = call_open_chat_api(user_message)
+	try:
+		# OpenAIの返信結果
+		result = call_open_chat_api(user_message)
 
-	# LINEに返信を送信
-	line_bot_api.reply_message_with_http_info(
-   	ReplyMessageRequest(
-        	replyToken=event.reply_token,
-        	messages=[TextMessage(text=result)]
-       )
-    )
-
+		# LINEに返信を送信
+		line_bot_api.reply_message_with_http_info(
+   		ReplyMessageRequest(
+        		replyToken=event.reply_token,
+        		messages=[TextMessage(text=result)]
+       		)
+    	)
+	except Exception as e:
+		logging.exception("An error occured during message handling:")
+		# エラー発生時にユーザーに通知
+		line_bot_api.reply_message_with_http_info(
+			ReplyMessageRequest(
+				replyToken=event.reply_token,
+				messages=[TextMessage(text="エラーが発生しました。")]
+			)
+		)
 	# OpenAI APIへのリクエストの設定
 #	headers = {
 #			'Content-Type':'application/json',
