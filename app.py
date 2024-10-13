@@ -19,6 +19,7 @@ import requests
 
 # エラーログの取得
 import logging
+log_path = os.path.join(os.path.expanduser('~'), 'error.log')
 logging.basicConfig(filename='error.log', level=logging.DEBUG)
 
 ## .env ファイル読み込み
