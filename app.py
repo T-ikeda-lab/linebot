@@ -17,6 +17,10 @@ import openai
 # HTTPリクエストを送信するライブラリ
 import requests
 
+# エラーログの取得
+import logging
+logging.basicConfig(filename='error.log', level=logging.DEBUG)
+
 ## .env ファイル読み込み
 from dotenv import load_dotenv
 load_dotenv()
