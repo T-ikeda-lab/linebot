@@ -76,7 +76,7 @@ def handle_message(event):
     body = {
 			'model':'gpt-3.5-turbo',
 			'messages':[
-			{'role':'user', 'content':'user_message'}
+			{'role':'user', 'content':user_message}
 			]
 		}
 
