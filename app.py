@@ -28,7 +28,7 @@ load_dotenv()
 ## 環境変数を変数に割り当て
 CHANNEL_ACCESS_TOKEN = os.environ["CHANNEL_ACCESS_TOKEN"]
 CHANNEL_SECRET = os.environ["CHANNEL_SECRET"]
-openai_api_key = os.getenv("OPENAI_API_KEY")
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 ## Flask アプリのインスタンス化
 app = Flask(__name__)
@@ -36,8 +36,6 @@ app = Flask(__name__)
 ## LINE のアクセストークン読み込み
 configuration = Configuration(access_token=CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(CHANNEL_SECRET)
-# api_client = ApiClient(configuration)  # MessagingApiのインスタンス化
-# line_bot_api = MessagingApi(api_client)
 
 ## 友達追加時のメッセージ送信
 @handler.add(FollowEvent)
