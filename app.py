@@ -53,21 +53,21 @@ def handle_follow(event):
 	))
 
 # OpenAIの設定
-def call_open_chat_api(user_message):
-	try:	
-		response = openai.ChatCompletion.create(
-			model='gpt-3.5-turbo',
-			messages=[
-				{'role': 'system', 'content': 'You are helpful assustant.'},
-				{'role': 'user', 'content': user_message}
-			]
-		)
+#def call_open_chat_api(user_message):
+#	try:	
+#		response = openai.ChatCompletion.create(
+#			model='gpt-3.5-turbo',
+#			messages=[
+#				{'role': 'system', 'content': 'You are helpful assustant.'},
+#				{'role': 'user', 'content': user_message}
+#			]
+#		)
 		# APIレスポンスをログに出力する
-		logging.info(f"OpneAI API Response: {response}")
-		return response.choices[0].message['content']
-	except Exception as e:
-		logging.exception("An error occured calling OpenAI API.")
-		return "OpenAI APIでエラーが発生しました。"
+#		logging.info(f"OpneAI API Response: {response}")
+#		return response.choices[0].message['content']
+#	except Exception as e:
+#		logging.exception("An error occured calling OpenAI API.")
+#		return "OpenAI APIでエラーが発生しました。"
 
 ## コールバックのおまじない
 @app.route("/callback", methods=['POST'])
@@ -102,48 +102,57 @@ def handle_message(event):
 	# 受信メッセージの中身を取得
 	user_message = event.message.text
 
-	try:
+#	try:
 		# OpenAIの返信結果
-		result = call_open_chat_api(user_message)
+#		result = call_open_chat_api(user_message)
 
 		# LINEに返信を送信
-		line_bot_api.reply_message(
+#		line_bot_api.reply_message(
+#   		ReplyMessageRequest(
+#        		replyToken=event.reply_token,
+#        		messages=[TextMessage(text=result)]
+#       		)
+#    	)
+#	except Exception as e:
+#		logging.exception("An error occured during message handling:")
+		# エラー発生時にユーザーに通知
+#		line_bot_api.reply_message(
+#			ReplyMessageRequest(
+#				replyToken=event.reply_token,
+#				messages=[TextMessage(text="エラーが発生しました。")]
+#			)
+#		)
+
+	# OpenAI APIへのリクエストの設定
+	headers = {
+			'Content-Type':'application/json',
+			'Authorization': f'Bearer {openai.api_key}'
+		}
+	body = {
+			'model':'gpt-3.5-turbo',
+			'messages':[
+			{'role':'user', 'content':user_message}
+			]
+		}
+
+	# OpenAI APIにリクエストを送信
+	response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, json=body)
+	
+	# OpenAI APIエラーハンドリング
+	if response.ok:
+		response_json = response.json()
+		text = response_json['choices'][0]['message']['content'].strip()
+	else:
+		text = "申し訳ありません。エラーが発生しました。"
+		app.logger.error(f"OpenAI API error: {response.status_code} {response.text}")
+
+	# LINEに返信を送信
+	line_bot_api.reply_message(
    		ReplyMessageRequest(
-        		replyToken=event.reply_token,
-        		messages=[TextMessage(text=result)]
+       		replyToken=event.reply_token,
+        		messages=[TextMessage(text=text)]
        		)
     	)
-	except Exception as e:
-		logging.exception("An error occured during message handling:")
-		# エラー発生時にユーザーに通知
-		line_bot_api.reply_message(
-			ReplyMessageRequest(
-				replyToken=event.reply_token,
-				messages=[TextMessage(text="エラーが発生しました。")]
-			)
-		)
-	# OpenAI APIへのリクエストの設定
-#	headers = {
-#			'Content-Type':'application/json',
-#			'Authorization': f'Bearer {openai.api_key}'
-#		}
-#	body = {
-#			'model':'gpt-3.5-turbo',
-#			'messages':[
-#			{'role':'user', 'content':user_message}
-#			]
-#		}
-#
-	# OpenAI APIにリクエストを送信
-#	response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, json=body)
-#	
-	# OpenAI APIエラーハンドリング
-#	if response.ok:
-#		response_json = response.json()
-#		text = response_json['choices'][0]['message']['content'].strip()
-#	else:
-#		text = "申し訳ありません。エラーが発生しました。"
-#		app.logger.error(f"OpenAI API error: {response.status_code} {response.text}")
 
 
 ## オウム返しメッセージ
